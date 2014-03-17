@@ -1,6 +1,8 @@
 Logscale Agent
 ==============
 
+[![Build Status](https://travis-ci.org/logscale/logscale-agent.png?branch=master)](https://travis-ci.org/logscale/logscale-agent)
+
 The Logscale Agent indexes and forwards events as specified by the agent
 configuration URL that it is started with.
 
