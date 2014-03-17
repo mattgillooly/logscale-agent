@@ -1,0 +1,5 @@
+.gradle/
+.vagrant/
+build/
+log/
+conf.yml

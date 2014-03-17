@@ -1,0 +1,300 @@
+group = 'com.logscale'
+version = '0.0.1'
+
+description = """Logscale agent: edge event collector, forwarder and indexer"""
+
+ext {
+  pkg_short_desc = 'Logscale Agent'
+  license = 'proprietary'
+  pkg_prefix = '/opt'
+  dist_dir = new File(buildDir, "dist")
+  pkg_dir = new File(buildDir, "pkg")
+  pkg_linux_dir = new File(buildDir, "pkg_linux")
+  pkg_osx_dir = new File(buildDir, "pkg_osx")
+  global_cache_dir = new File("${System.getenv('HOME')}/.bow/cache")
+  project_cache_dir = new File(buildDir, 'bow/cache')
+  build_libs_dir = new File(buildDir, 'libs')
+  src_package_dir = new File('src/package')
+  src_package_home_dir = new File(src_package_dir, 'home')
+  src_package_scripts_dir = new File(src_package_dir, 'scripts')
+  build_pkg_dir = new File(buildDir, 'pkg')
+  build_pkg_app_dir = new File(build_pkg_dir, "${name}-${version}")
+  build_pkg_scripts_dir = new File(buildDir, 'pkg_scripts')
+  build_pkg_scripts_common_dir = new File(build_pkg_scripts_dir, 'common')
+  build_pkg_scripts_tmp_dir = new File(buildDir, 'pkg_scripts.tmp')
+  build_pkg_linux_dir = new File(buildDir, 'pkg_linux')
+  build_pkg_linux_tmp_dir = new File(buildDir, 'pkg_linux.tmp')
+  build_pkg_linux_tmp_app_dir = new File(build_pkg_linux_tmp_dir, "${name}-${version}")
+  build_pkg_osx_dir = new File(buildDir, 'pkg_osx')
+  build_pkg_osx_tmp_dir = new File(buildDir, 'pkg_osx.tmp')
+  build_pkg_osx_tmp_app_dir = new File(build_pkg_osx_tmp_dir, "${name}-${version}")
+
+  jre_url_osx = 'http://download.java.net/jdk8/archive/b121/binaries/jre-8-ea-bin-b121-macosx-x86_64-19_dec_2013.dmg'
+  jre_url_linux = 'http://download.java.net/jdk8/archive/b121/binaries/jre-8-ea-bin-b121-linux-x64-19_dec_2013.tar.gz'
+  cache_jre_osx_dmg = new File(global_cache_dir, 'jre-8-ea-bin-b121-macosx-x86_64-19_dec_2013.dmg')
+  cache_jre_osx_tgz = new File(project_cache_dir, 'jre-8-ea-bin-b121-macosx-x86_64-19_dec_2013.tar.gz')
+  cache_jre_linux_tgz = new File(global_cache_dir, 'jre-8-ea-bin-b121-linux-x64-19_dec_2013.tar.gz')
+  jre_dir_name = 'jre1.8.0'
+
+  dist_tgz_linux = new File(dist_dir, "${name}-${version}-linux-x64.tgz")
+  dist_tgz_osx = new File(dist_dir, "${name}-${version}-macosx-x86_64.tgz")
+  dist_deb = new File(dist_dir, "${name}-${version}-linux-x64.deb")
+  dist_rpm = new File(dist_dir, "${name}-${version}-linux-x64.rpm")
+
+  pkg_app_user = "logscale"
+}
+
+ant.property(name: 'template_app_name', value: project.name)
+ant.property(name: 'template_app_description', value: description)
+ant.property(name: 'template_app_short_description', value: pkg_short_desc)
+ant.property(name: 'template_app_home', value: "${pkg_prefix}/${project.name}-${version}")
+ant.property(name: 'template_app_jre_dir_name', value: jre_dir_name)
+ant.property(name: 'template_app_user', value: pkg_app_user)
+ant.property(name: 'template_app_version', value: version)
+ant.property(name: 'template_app_main_class', value: 'com.logscale.agent.Main');
+ant.property(name: 'template_prefix', value: pkg_prefix)
+
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+
+  dependencies {
+    classpath 'com.kenshoo:gradle-fpm:0.4'
+    classpath 'de.undercouch:gradle-download-task:0.4'
+  }
+}
+
+apply plugin: 'download-task'
+apply plugin: 'fpm-packaging'
+apply plugin: 'java'
+apply plugin: 'maven'
+
+repositories {
+  mavenLocal()
+  mavenCentral()
+}
+
+dependencies {
+  compile 'com.logscale:logscale-logger:0.0.2'
+  compile 'com.logscale:logscale-mixins:0.0.1'
+  compile 'org.kohsuke:akuma:1.9'
+  compile 'org.yaml:snakeyaml:1.13-SNAPSHOT'
+  compile 'commons-io:commons-io:2.4'
+  compile 'dk.brics.automaton:automaton:1.11-8'
+  compile 'io.netty:netty-all:5.0.0.Alpha1'
+  compile 'com.fasterxml.jackson.core:jackson-core:2.2.3'
+  compile 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
+  compile 'com.fasterxml.jackson.core:jackson-annotations:2.2.3'
+  compile 'commons-codec:commons-codec:1.8'
+  compile 'org.bouncycastle:bcprov-jdk16:1.46'
+  testCompile 'junit:junit:4.10'
+  testCompile 'com.github.stefanbirkner:system-rules:1.3.1'
+}
+
+processResources {
+  from(sourceSets.main.resources.srcDirs) {
+    include '**/*.properties'
+    filter(org.apache.tools.ant.filters.ExpandProperties, project: ant.antProject)
+  }
+}
+
+jar {
+  from('.') {
+    include 'LICENSE'
+    into 'META-INF'
+  }
+}
+
+packaging {
+  packageDir = dist_dir
+  baseDir = pkg_linux_dir
+  prefix = pkg_prefix
+  dependencies = [
+      'initscripts',
+  ]
+  extraOptions = [
+      '--description': description,
+      '--license': license,
+      '--vendor': 'Logscale',
+      '--maintainer': 'info@logscale.com',
+      '--url': 'http://logscale.com',
+      '--architecture': 'all',
+      '--package': 'NAME-VERSION-linux-x64.TYPE',
+      '--rpm-os': 'linux',
+      '--after-install': new File(build_pkg_scripts_common_dir, 'after-install.sh').absolutePath,
+      '--before-remove': new File(build_pkg_scripts_common_dir, 'before-remove.sh').absolutePath,
+  ]
+  extraFlags = [
+      '--rpm-auto-add-directories',
+      '--template-scripts',
+  ]
+}
+
+task cache_fetch {
+  download {
+    src jre_url_osx
+    dest global_cache_dir
+    overwrite false
+  }
+  download {
+    src jre_url_linux
+    dest global_cache_dir
+    overwrite false
+  }
+
+  doFirst {
+    mkdir global_cache_dir
+  }
+}
+
+task cache_repack_osx(type: Exec) {
+  inputs.file cache_jre_osx_dmg
+  outputs.file cache_jre_osx_tgz
+  commandLine '/bin/bash', '-c', """hdiutil attach ${cache_jre_osx_dmg} && \\
+rm -rf build/cache_repack_osx && \\
+mkdir -p build/cache_repack_osx && \\
+xar -xf /Volumes/Java\\ 8/Java\\ 8.pkg -C build/cache_repack_osx && \\
+hdiutil detach /Volumes/Java\\ 8/ && \\
+tar xzf build/cache_repack_osx/javaappletplugin.pkg/Payload -C build/cache_repack_osx Contents/Home && \\
+mv build/cache_repack_osx/Contents/Home build/cache_repack_osx/${jre_dir_name} && \\
+tar czf ${cache_jre_osx_tgz} -C build/cache_repack_osx ${jre_dir_name} && \\
+rm -rf build/cache_repack_osx"""
+
+  doFirst {
+    mkdir project_cache_dir
+  }
+}
+cache_repack_osx.dependsOn 'cache_fetch'
+
+task cache
+cache.dependsOn 'cache_fetch', 'cache_repack_osx'
+
+task ('pkg', type: Copy) {
+  inputs.file 'LICENSE'
+  inputs.file 'NOTICE'
+  inputs.files configurations.runtime
+  inputs.dir build_libs_dir
+  inputs.dir src_package_home_dir
+  outputs.dir build_pkg_app_dir
+  from(configurations.runtime) {
+    into 'lib/ext'
+  }
+  from(build_libs_dir) {
+    into 'lib'
+  }
+  from(src_package_home_dir) {
+    rename { file -> file.replace('APP_NAME', project.name) }
+    rename(/^(.*)\.sh$/, '$1')
+    filter(org.apache.tools.ant.filters.ExpandProperties, project: ant.antProject)
+  }
+  from 'LICENSE'
+  from 'NOTICE'
+  into build_pkg_app_dir
+}
+pkg.dependsOn jar
+
+task ('pkg_linux', type: Copy) {
+  from(build_pkg_dir) {
+    into '..'
+  }
+  from tarTree(cache_jre_linux_tgz)
+  into build_pkg_linux_tmp_app_dir
+
+  doFirst {
+    mkdir build_pkg_linux_tmp_dir
+  }
+  doLast {
+    build_pkg_linux_tmp_dir.renameTo(build_pkg_linux_dir)
+  }
+}
+pkg_linux.dependsOn 'cache', 'pkg'
+pkg_linux.onlyIf { !build_pkg_linux_dir.exists() }
+
+task ('pkg_scripts', type: Copy) {
+  inputs.dir src_package_scripts_dir
+  outputs.dir build_pkg_scripts_dir
+  from(src_package_scripts_dir) {
+    filter(org.apache.tools.ant.filters.ExpandProperties, project: ant.antProject)
+  }
+  into build_pkg_scripts_tmp_dir
+
+  doFirst {
+    mkdir build_pkg_scripts_tmp_dir
+  }
+  doLast {
+    build_pkg_scripts_tmp_dir.renameTo(build_pkg_scripts_dir)
+  }
+}
+
+task ('pkg_osx', type: Copy) {
+  from(build_pkg_dir) {
+    into '..'
+  }
+  from tarTree(cache_jre_osx_tgz)
+  into build_pkg_osx_tmp_app_dir
+
+  doFirst {
+    mkdir build_pkg_osx_tmp_dir
+  }
+  doLast {
+    build_pkg_osx_tmp_dir.renameTo(build_pkg_osx_dir)
+  }
+}
+pkg_osx.dependsOn 'cache', 'pkg'
+pkg_osx.onlyIf { !build_pkg_osx_dir.exists() }
+
+class TarLinuxTask extends com.kenshoo.watership.PackagingTask {
+  TarLinuxTask() {
+    super('tar')
+  }
+
+  def initConfiguration() {
+    super.initConfiguration()
+    prefix = ''
+    extraOptions << ['--package': 'NAME-VERSION-linux-x64.tgz']
+  }
+}
+
+class TarOsxTask extends TarLinuxTask {
+  def initConfiguration() {
+    super.initConfiguration()
+    baseDir = project.pkg_osx_dir
+    extraOptions << ['--package': 'NAME-VERSION-macosx-x86_64.tgz']
+  }
+}
+
+task tgz_linux(type: TarLinuxTask)
+tgz_linux.dependsOn 'pkg_linux'
+tgz_linux.onlyIf { !dist_tgz_linux.exists() }
+
+task tgz_osx(type: TarOsxTask)
+tgz_osx.dependsOn 'pkg_osx'
+tgz_osx.onlyIf { !dist_tgz_osx.exists() }
+
+class CustomDebianTask extends com.kenshoo.watership.DebianTask {
+  def initConfiguration() {
+    super.initConfiguration()
+    dependencies = project.packaging.dependencies +
+        'lsb-base'
+  }
+}
+
+class CustomRpmTask extends com.kenshoo.watership.RpmTask {
+  def initConfiguration() {
+    super.initConfiguration()
+    dependencies = project.packaging.dependencies +
+        'redhat-lsb-core' +
+        'coreutils'
+  }
+}
+
+task custom_debian(type: CustomDebianTask)
+custom_debian.dependsOn 'pkg_linux', 'pkg_scripts'
+custom_debian.onlyIf { !dist_deb.exists() }
+
+task custom_rpm(type: CustomRpmTask)
+custom_rpm.dependsOn 'pkg_linux', 'pkg_scripts'
+custom_rpm.onlyIf { !dist_rpm.exists() }
+
+build.dependsOn 'tgz_linux', 'tgz_osx', 'custom_debian', 'custom_rpm'

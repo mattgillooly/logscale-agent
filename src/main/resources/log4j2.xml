@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration status="WARN">
+  <properties>
+    <property name="filetoken">${sys:logger.filetoken}</property>
+    <property name="filename">log/${filetoken}.log</property>
+    <property name="filepattern">log/arc/${date:yyyy-MM}/${filetoken}-%d{MM-dd-yyyy}-%i.log.gz</property>
+  </properties>
+  <appenders>
+    <RollingRandomAccessFile name="default" fileName="${filename}"
+                             filePattern="${filepattern}" append="true">
+      <PatternLayout pattern="%d %p [%t:%X] %c %m%ex%n"/>
+      <Policies>
+        <SizeBasedTriggeringPolicy size="100 MB"/>
+      </Policies>
+    </RollingRandomAccessFile>
+    <console name="stdout">
+      <patternlayout pattern="%d %p [%t:%X] %c %m%ex%n"/>
+    </console>
+  </appenders>
+  <loggers>
+    <logger name="com.logscale" level="debug" additivity="false">
+      <appender-ref ref="default"/>
+    </logger>
+    <root level="info">
+      <appender-ref ref="default"/>
+    </root>
+  </loggers>
+</configuration>
