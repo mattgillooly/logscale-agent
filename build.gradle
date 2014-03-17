@@ -5,7 +5,7 @@ description = """Logscale agent: edge event collector, forwarder and indexer"""
 
 ext {
   pkg_short_desc = 'Logscale Agent'
-  license = 'proprietary'
+  license = 'MIT'
   pkg_prefix = '/opt'
   dist_dir = new File(buildDir, "dist")
   pkg_dir = new File(buildDir, "pkg")
