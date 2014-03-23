@@ -1,3 +1,6 @@
+import com.kenshoo.watership.DebianTask
+import com.kenshoo.watership.PackagingTask
+import com.kenshoo.watership.RpmTask
 import org.apache.tools.ant.filters.ExpandProperties
 
 group = 'com.logscale'
@@ -240,7 +243,7 @@ task ('pkg_osx', type: Copy) {
 pkg_osx.dependsOn 'cache', 'pkg'
 pkg_osx.onlyIf { !build_pkg_osx_dir.exists() }
 
-class TarLinuxTask extends com.kenshoo.watership.PackagingTask {
+class TarLinuxTask extends PackagingTask {
   TarLinuxTask() {
     //noinspection GroovyAssignabilityCheck
     super('tar')
@@ -269,7 +272,7 @@ task tgz_osx(type: TarOsxTask)
 tgz_osx.dependsOn 'pkg_osx'
 tgz_osx.onlyIf { !dist_tgz_osx.exists() }
 
-class CustomDebianTask extends com.kenshoo.watership.DebianTask {
+class CustomDebianTask extends DebianTask {
   def initConfiguration() {
     super.initConfiguration()
     dependencies = project.packaging.dependencies +
@@ -277,7 +280,7 @@ class CustomDebianTask extends com.kenshoo.watership.DebianTask {
   }
 }
 
-class CustomRpmTask extends com.kenshoo.watership.RpmTask {
+class CustomRpmTask extends RpmTask {
   def initConfiguration() {
     super.initConfiguration()
     dependencies = project.packaging.dependencies +
