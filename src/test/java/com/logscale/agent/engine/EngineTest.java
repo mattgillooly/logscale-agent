@@ -1,15 +1,12 @@
 package com.logscale.agent.engine;
 
-import com.logscale.logger.Logger;
 import org.junit.Test;
 
-import static org.junit.Assert.assertNotNull;
+import static com.logscale.agent.testing.Assert.assertThrows;
 
 public class EngineTest {
     @Test
-    public void testNoArgFactory() {
-        Logger logger = Logger.getLogger();
-        assertNotNull(logger);
-        logger.info("blah");
+    public void constructorThrowsOnNullConfig() {
+        assertThrows(NullPointerException.class, () -> new Engine(null, null));
     }
 }
