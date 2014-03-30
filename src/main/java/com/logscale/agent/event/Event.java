@@ -31,10 +31,6 @@ public class Event {
         id = Hex.encodeHexString(digest.digest());
     }
 
-    public boolean matches(String query) {
-        return content.contains(query);
-    }
-
     @Override
     public String toString() {
         try {
