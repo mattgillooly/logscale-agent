@@ -3,8 +3,6 @@ package com.logscale.agent.event;
 import com.logscale.agent.util.DelegatingStream;
 import com.logscale.logger.Logger;
 
-import java.text.*;
-import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
@@ -42,6 +40,8 @@ public class EventSource extends DelegatingStream<Event> {
     private static Event event(String name, long sequence, String message) {
         // TODO: use real date parser
         long timestamp = System.currentTimeMillis();
-        return new Event(name, timestamp, sequence, message);
+        Event evt = new Event(name, timestamp, sequence, message);
+        log.trace("created new event: %s", evt);
+        return evt;
     }
 }

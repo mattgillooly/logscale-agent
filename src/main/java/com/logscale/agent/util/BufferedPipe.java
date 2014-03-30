@@ -7,7 +7,7 @@ public class BufferedPipe<T> implements Consumer<T>, Supplier<T> {
     private final ArrayBlockingQueue<T> queue;
 
     public BufferedPipe(int capacity) {
-        this(new ArrayBlockingQueue<T>(capacity));
+        this(new ArrayBlockingQueue<>(capacity));
     }
 
     private BufferedPipe(ArrayBlockingQueue<T> queue) {

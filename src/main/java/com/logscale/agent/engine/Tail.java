@@ -37,7 +37,7 @@ public class Tail implements Runnable {
     public Stream<Event> eventStream() {
         TailStream tailStream = new TailStream();
         ExecutorService executorService = Executors.newSingleThreadExecutor(engine.threadFactory);
-        executorService.submit(new Tailer(new File(path), tailStream, 500, false, false, 4096)::run);
+        executorService.submit(() -> new Tailer(new File(path), tailStream, 500, false, false, 4096).run());
         EventSource eventSource = new EventSource(String.format("tail[%s]", path), tailStream);
         return new EventBuffer(eventSource) {
             @Override
@@ -65,6 +65,9 @@ public class Tail implements Runnable {
         public void close() {
             log.info("closing tail stream for %s", path);
             tailerRef.getAndSet(null).stop();
+            if (!isEmpty()) {
+                log.warn("tail stream for %s was not empty at close", path);
+            }
         }
 
         @Override

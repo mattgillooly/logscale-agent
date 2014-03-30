@@ -7,7 +7,7 @@ public class PushStream<T> extends DelegatingStream<T> implements Consumer<T> {
     protected final BufferedPipe<T> pipe;
 
     public PushStream(int capacity) {
-        this(new BufferedPipe<T>(capacity));
+        this(new BufferedPipe<>(capacity));
     }
 
     public boolean isEmpty() {

@@ -114,6 +114,7 @@ public class WebsocketClientSession implements Runnable {
                 }
                 ch = cf.sync().channel();
                 log.info("connected to " + ch.remoteAddress());
+                //noinspection CodeBlock2Expr
                 ch.closeFuture().addListener(
                         (io.netty.util.concurrent.Future<Void> future) -> {
                             log.warn("channel closed");

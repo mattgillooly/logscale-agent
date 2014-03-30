@@ -25,17 +25,17 @@ public class AuthenticateMessage implements JsonMessage {
         timestamp = System.currentTimeMillis();
         session = startSessionMessage.get("session").asText();
 
-        StringBuilder envelopeBuilder = new StringBuilder();
-        envelopeBuilder.append("agent=").append(urlEncode(this.agent));
-        envelopeBuilder.append("&agentVersion=").append(urlEncode(agentVersion));
-        envelopeBuilder.append("&session=").append(urlEncode(session));
-        envelopeBuilder.append("&timestamp=").append(timestamp);
-        envelopeBuilder.append("&type=").append(urlEncode(type));
+        String envelope =
+                "agent=" + urlEncode(this.agent) +
+                "&agentVersion=" + urlEncode(agentVersion) +
+                "&session=" + urlEncode(session) +
+                "&timestamp=" + timestamp +
+                "&type=" + urlEncode(type);
 
         KeyPair keyPair = (KeyPair) new PEMReader(new StringReader(agent.key)).readObject();
         Signature sha1 = Signature.getInstance("SHA1withRSA");
         sha1.initSign(keyPair.getPrivate());
-        sha1.update(envelopeBuilder.toString().getBytes(CharsetUtil.UTF_8));
+        sha1.update(envelope.getBytes(CharsetUtil.UTF_8));
         signature = Base64.getEncoder().encodeToString(sha1.sign());
     }
 

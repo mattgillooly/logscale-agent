@@ -2,7 +2,6 @@ package com.logscale.agent.ws;
 
 import com.fasterxml.jackson.databind.*;
 import com.logscale.agent.engine.Engine;
-import com.logscale.agent.event.Event;
 import com.logscale.agent.ws.msg.AuthenticateMessage;
 import com.logscale.logger.Logger;
 import io.netty.channel.*;
@@ -16,8 +15,6 @@ public class WebsocketClientHandler extends SimpleChannelInboundHandler<TextWebS
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final ConcurrentMap<String, List<ChannelHandlerContext>> subs = new ConcurrentHashMap<>();
-
-    private static final String[] EMPTY_STRING_ARRAY = {};
 
     private final WebsocketClientSession session;
 
@@ -81,15 +78,5 @@ public class WebsocketClientHandler extends SimpleChannelInboundHandler<TextWebS
         startSession,
         configureAgent,
         uiSubscribe,
-    }
-
-    public static String[] subscribers(Event e) {
-        List<String> matches = new ArrayList<>(subs.keySet());
-        matches.removeIf(cmd -> !e.matches(cmd));
-        if (matches.isEmpty()) {
-            return EMPTY_STRING_ARRAY;
-        } else {
-            return matches.toArray(new String[matches.size()]);
-        }
     }
 }
