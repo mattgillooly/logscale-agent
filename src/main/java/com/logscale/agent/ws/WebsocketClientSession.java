@@ -25,6 +25,7 @@ public class WebsocketClientSession implements Runnable {
     private static final int HANDSHAKE_TIMEOUT_SEC = 10;
     private static final int STOP_TIMEOUT_SEC = 3;
     private static final int[] RECONNECT_DELAYS_SEC = {1, 2, 5, 10, 20, 30};
+    private static final int RECONNECT_AFTER_HANDSHAKE_MIN_SEC = 10;
 
     public final WebsocketClient client;
     public final Agent agent;
@@ -67,7 +68,7 @@ public class WebsocketClientSession implements Runnable {
         }
     }
 
-    public void stream(Event e) throws IOException {
+    public void send(Event e) throws IOException {
         log.debug("sending event: %s", e);
         new EventMessage(e).send(ch);
     }
@@ -132,10 +133,18 @@ public class WebsocketClientSession implements Runnable {
                 }
                 log.info("handshake complete");
 
+                long afterHandshakeMillis = -System.currentTimeMillis();
                 while (ch.isActive()) {
                     Thread.sleep(500);
                 }
                 log.warn("channel no longer active");
+                afterHandshakeMillis += System.currentTimeMillis();
+                long waitAfterHandshakeMillis = TimeUnit.SECONDS.toMillis(RECONNECT_AFTER_HANDSHAKE_MIN_SEC) - afterHandshakeMillis;
+                if (waitAfterHandshakeMillis > 0) {
+                    log.warn("waiting up to %s seconds from handshake after quick channel disconnect (%s millis left)", RECONNECT_AFTER_HANDSHAKE_MIN_SEC, waitAfterHandshakeMillis);
+                    Thread.sleep(waitAfterHandshakeMillis);
+                }
+
             } catch (Exception e) {
                 log.error("error in session", e);
             } finally {

@@ -2,10 +2,8 @@ package com.logscale.agent.event;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.netty.util.CharsetUtil;
-import org.apache.commons.codec.binary.Hex;
-
-import java.security.*;
+import com.logscale.agent.util.Sha1;
+import org.apache.commons.codec.Charsets;
 
 public class Event {
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -21,14 +19,7 @@ public class Event {
         this.timestamp = timestamp;
         this.sequence = sequence;
         this.content = content;
-        MessageDigest digest;
-        try {
-            digest = MessageDigest.getInstance("SHA-1");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("unexpected: no SHA-1", e);
-        }
-        digest.update(content.getBytes(CharsetUtil.UTF_8));
-        id = Hex.encodeHexString(digest.digest());
+        id = Sha1.hexDigest(content);
     }
 
     @Override

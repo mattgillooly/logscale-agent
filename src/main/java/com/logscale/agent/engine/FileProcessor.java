@@ -5,36 +5,29 @@ import com.logscale.agent.util.PushStream;
 import com.logscale.logger.Logger;
 import org.apache.commons.io.input.*;
 
-import java.io.*;
+import java.io.File;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
-public class Tail implements Runnable {
+public class FileProcessor implements SourceProcessor {
     private static final Logger log = Logger.getLogger();
 
-    final Engine engine;
-    final String path;
+    private final String path;
 
-    public Tail(Engine engine, String path) {
-        this.engine = engine;
+    private Engine engine;
+
+    public FileProcessor(String path) {
         this.path = path;
     }
 
     @Override
-    public void run() {
-        eventStream().forEach(event -> {
-            log.debug("event: %s", event);
-            try {
-                engine.session.stream(event);
-            } catch (IOException e) {
-                eventStream().close();
-                throw new UncheckedIOException("trouble sending event: " + event, e);
-            }
-        });
+    public void init(Engine engine) {
+        this.engine = engine;
     }
 
-    public Stream<Event> eventStream() {
+    @Override
+    public Stream<Event> events() {
         TailStream tailStream = new TailStream();
         ExecutorService executorService = Executors.newSingleThreadExecutor(engine.threadFactory);
         executorService.submit(() -> new Tailer(new File(path), tailStream, 500, false, false, 4096).run());
