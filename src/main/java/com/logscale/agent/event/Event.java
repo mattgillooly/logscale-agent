@@ -3,7 +3,6 @@ package com.logscale.agent.event;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.logscale.agent.util.Sha1;
-import org.apache.commons.codec.binary.Hex;
 
 public class Event {
     private static final ObjectMapper objectMapper = new ObjectMapper();

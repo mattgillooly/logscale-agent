@@ -52,7 +52,6 @@ public class IndexProcessorTest {
         }
     }
 
-    @Test
     public void processVarLogSystem() throws Exception {
         Consumer<Event> handler = processor.handler();
         try(BufferedReader br = new BufferedReader(new FileReader("/var/log/system.log"))) {
