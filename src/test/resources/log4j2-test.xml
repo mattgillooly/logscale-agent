@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration status="WARN">
+    <appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d %p [%t] %c{1.} %m%ex%n"/>
+        </Console>
+    </appenders>
+    <loggers>
+        <logger name="com.logscale" level="trace" additivity="false">
+            <appender-ref ref="Console"/>
+        </logger>
+        <root level="debug">
+            <appender-ref ref="Console"/>
+        </root>
+    </loggers>
+</configuration>

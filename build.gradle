@@ -85,6 +85,7 @@ dependencies {
   compile 'com.fasterxml.jackson.core:jackson-annotations:2.2.3'
   compile 'com.fasterxml.jackson.core:jackson-core:2.2.3'
   compile 'com.fasterxml.jackson.core:jackson-databind:2.2.3'
+  compile 'com.google.guava:guava:16.0.1'
   compile 'com.logscale:logscale-logger:0.0.2'
   compile 'com.logscale:logscale-mixins:0.0.1'
   compile 'commons-codec:commons-codec:1.9'
@@ -99,6 +100,7 @@ dependencies {
   testCompile 'junit:junit:4.10'
 }
 
+sourceSets.main.resources.srcDirs.add 'ext/resources'
 processResources {
   from(sourceSets.main.resources.srcDirs) {
     include '**/*.properties'

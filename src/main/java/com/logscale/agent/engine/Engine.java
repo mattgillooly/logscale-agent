@@ -72,7 +72,13 @@ public class Engine implements Runnable {
                 log.debug("event: %s", event);
                 try {
                     session.send(event);
-                    handlers.parallelStream().forEach((handler) -> handler.accept(event));
+                    handlers.parallelStream().forEach((handler) -> {
+                        try {
+                            handler.accept(event);
+                        } catch (Exception e) {
+                            log.error("trouble handling event in " + handler + ": " + event + "\n", e);
+                        }
+                    });
                 } catch (IOException e) {
                     processor.events().close();
                     throw new UncheckedIOException("trouble sending event from processor " + processor + ": " + event, e);

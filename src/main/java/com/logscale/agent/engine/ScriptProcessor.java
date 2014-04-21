@@ -4,7 +4,8 @@ import com.logscale.agent.event.Event;
 import com.logscale.logger.Logger;
 
 import javax.script.*;
-import java.io.File;
+import java.io.*;
+import java.net.URLEncoder;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -24,8 +25,10 @@ public class ScriptProcessor implements Processor {
         try {
             ScriptEngineManager scriptEngineManager = new ScriptEngineManager();
             ScriptEngine scriptEngine = scriptEngineManager.getEngineByName("nashorn");
-            String code = "load('" + loadPath("classpath:com/logscale/agent/processor/context.js") + "'); load('" + loadPath(url) + "');";
-            log.debug("evaluating script: %s", code);
+            String code =
+                    "load('" + loadPath("classpath:com/logscale/agent/processor/context.js") + "');\n" +
+                    "load('" + loadPath(url) + "');\n";
+            log.debug("evaluating script:\n%s", code);
             scriptProcessor = (Processor) scriptEngine.eval(code);
         } catch (ScriptException se) {
             throw new RuntimeException("trouble evaluating script at url: " + url, se);
@@ -51,14 +54,23 @@ public class ScriptProcessor implements Processor {
     }
 
     private static String loadPath(String url) {
-        String loadPath = url; // TODO: escape single quotes in url
+        String loadPath = url;
         if (url.startsWith("classpath:")) {
             String resourceName = url.substring("classpath:".length());
             File trySrc = new File("src/main/resources/" + resourceName);
             if (trySrc.isFile() && trySrc.canRead()) {
                 loadPath = trySrc.getPath();
+            } else {
+                trySrc = new File("ext/resources/" + resourceName);
+                if (trySrc.isFile() && trySrc.canRead()) {
+                    loadPath = trySrc.getPath();
+                }
             }
         }
-        return loadPath;
+        try {
+            return URLEncoder.encode(loadPath, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException("unexpected encoding exception", e);
+        }
     }
 }

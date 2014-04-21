@@ -4,7 +4,6 @@ import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;
 
-/* TODO: this class was in an earlier Java 8 EA release, should either move it to util or use a different pattern */
 public class DelegatingStream<T> implements Stream<T> {
     private final Stream<T> stream;
 
