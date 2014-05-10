@@ -1,5 +1,6 @@
 package com.logscale.agent.event;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.logscale.agent.util.Sha1;
@@ -14,7 +15,11 @@ public class Event {
     public final CharSequence content;
     public final CharSequence[] partitions;
 
-    public Event(String source, long timestamp, long sequence, CharSequence content, CharSequence ... partitions) {
+    public Event(@JsonProperty("source") String source,
+                 @JsonProperty("timestamp") long timestamp,
+                 @JsonProperty("sequence") long sequence,
+                 @JsonProperty("content") CharSequence content,
+                 @JsonProperty("partitions") CharSequence ... partitions) {
         this.source = source;
         this.timestamp = timestamp;
         this.sequence = sequence;

@@ -3,6 +3,7 @@ package com.logscale.agent.engine;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.logscale.agent.event.Event;
 import com.logscale.agent.ws.WebsocketClientSession;
+import com.logscale.agent.ws.msg.EventMessage;
 import com.logscale.logger.Logger;
 
 import java.io.*;
@@ -20,7 +21,7 @@ public class Engine implements Runnable {
     final JsonNode config;
 
     final List<Processor> processors;
-    final List<Consumer<Event>> handlers;
+    final EventBus bus;
 
     final ThreadGroup threadGroup = new ThreadGroup("engine");
     final AtomicInteger threadNumber = new AtomicInteger();
@@ -39,27 +40,58 @@ public class Engine implements Runnable {
         }
 
         processors = new ArrayList<>();
-        handlers = new ArrayList<>();
-        processorsNode.iterator().forEachRemaining(processorNode -> {
-            ProcessorType processorType = ProcessorType.valueOf(processorNode.get("type").asText());
-            Processor processor = processorType.create(processorNode);
-            processors.add(processor);
-            log.info("initializing new %s processor: %s", processorType.name(), processor);
-            processor.init(this);
-            Consumer<Event> handler = processor.handler();
-            if (handler != null) {
-                handlers.add(handler);
+
+        JsonNode busNode = config.get("bus");
+        EventBusType eventBusType;
+        if (busNode != null) {
+            eventBusType = EventBusType.valueOf(busNode.get("type").asText());
+        } else {
+            eventBusType = EventBusType.naive;
+        }
+        bus = eventBusType.create(busNode);
+
+        bus.register("api", new Consumer<Event>() {
+            @Override
+            public void accept(Event event) {
+                log.debug("sending event: %s", event);
+                try {
+                    session.send(new EventMessage(event));
+                } catch (IOException e) {
+                    throw new UncheckedIOException("trouble sending event", e);
+                }
+
             }
         });
+
+        processorsNode.iterator().forEachRemaining(this::initProcessor);
+    }
+
+    private void initProcessor(JsonNode processorNode) {
+        ProcessorType processorType = ProcessorType.valueOf(processorNode.get("type").asText());
+        if (processorNode.get("disabled") != null && processorNode.get("disabled").asBoolean()) {
+            log.info("skipping disabled processor of type: %s", processorType.name());
+            return;
+        }
+        Processor processor = processorType.create(processorNode);
+        processors.add(processor);
+        log.info("initializing new %s processor: %s", processorType.name(), processor);
+        processor.init(this);
+        Consumer<Event> handler = processor.handler();
+        if (handler != null) {
+            bus.register(processorType.name(), handler);
+        }
     }
 
     @Override
     public void run() {
+        log.info("starting bus");
+        bus.start(this);
         log.info("creating event stream futures");
         Stream<Future> eventsFutures = processors.parallelStream().map(this::makeFuture);
         log.info("waiting for event stream futures");
         eventsFutures.forEach(Engine::getFuture);
-        log.info("got all event stream futures");
+        log.info("stopping bus");
+        bus.stop();
     }
 
     private Future makeFuture(Processor processor) {
@@ -70,19 +102,7 @@ public class Engine implements Runnable {
             }
             events.forEach(event -> {
                 log.debug("event: %s", event);
-                try {
-                    session.send(event);
-                    handlers.parallelStream().forEach((handler) -> {
-                        try {
-                            handler.accept(event);
-                        } catch (Exception e) {
-                            log.error("trouble handling event in " + handler + ": " + event + "\n", e);
-                        }
-                    });
-                } catch (IOException e) {
-                    processor.events().close();
-                    throw new UncheckedIOException("trouble sending event from processor " + processor + ": " + event, e);
-                }
+                bus.push(event);
             });
         };
         return Executors.newSingleThreadExecutor(threadFactory).submit(task);

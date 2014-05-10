@@ -1,10 +1,9 @@
 package com.logscale.agent.ws;
 
 import com.logscale.agent.Agent;
-import com.logscale.agent.event.Event;
 import com.logscale.agent.util.Ssl;
-import com.logscale.agent.ws.msg.EventMessage;
 import com.logscale.logger.Logger;
+import com.logscale.mixins.JsonMessage;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -68,9 +67,9 @@ public class WebsocketClientSession implements Runnable {
         }
     }
 
-    public void send(Event e) throws IOException {
-        log.debug("sending event: %s", e);
-        new EventMessage(e).send(ch);
+    public void send(JsonMessage msg) throws IOException {
+        log.debug("sending message: %s", msg);
+        msg.send(ch);
     }
 
     @Override

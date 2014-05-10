@@ -86,7 +86,7 @@ public class FileProcessor implements SourceProcessor {
             if (line.trim().isEmpty()) {
                 log.debug("discarding empty line from %s", path);
             } else {
-                log.info("handling line from %s: %s", path, line);
+                log.debug("handling line from %s: %s", path, line);
                 accept(line);
             }
         }
