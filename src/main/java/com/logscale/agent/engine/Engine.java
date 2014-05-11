@@ -50,19 +50,6 @@ public class Engine implements Runnable {
         }
         bus = eventBusType.create(busNode);
 
-        bus.register("api", new Consumer<Event>() {
-            @Override
-            public void accept(Event event) {
-                log.debug("sending event: %s", event);
-                try {
-                    session.send(new EventMessage(event));
-                } catch (IOException e) {
-                    throw new UncheckedIOException("trouble sending event", e);
-                }
-
-            }
-        });
-
         processorsNode.iterator().forEachRemaining(this::initProcessor);
     }
 
@@ -84,14 +71,18 @@ public class Engine implements Runnable {
 
     @Override
     public void run() {
-        log.info("starting bus");
-        bus.start(this);
-        log.info("creating event stream futures");
-        Stream<Future> eventsFutures = processors.parallelStream().map(this::makeFuture);
-        log.info("waiting for event stream futures");
-        eventsFutures.forEach(Engine::getFuture);
-        log.info("stopping bus");
-        bus.stop();
+        try {
+            log.info("starting bus");
+            bus.start(this);
+            log.info("creating event stream futures");
+            Stream<Future> eventsFutures = processors.parallelStream().map(this::makeFuture);
+            log.info("waiting for event stream futures");
+            eventsFutures.forEach(Engine::getFuture);
+            log.info("stopping bus");
+            bus.stop();
+        } catch (Exception e) {
+            log.error("trouble running engine", e);
+        }
     }
 
     private Future makeFuture(Processor processor) {
@@ -101,7 +92,6 @@ public class Engine implements Runnable {
                 return;
             }
             events.forEach(event -> {
-                log.debug("event: %s", event);
                 bus.push(event);
             });
         };
