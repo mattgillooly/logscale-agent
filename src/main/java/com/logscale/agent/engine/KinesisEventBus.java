@@ -3,16 +3,12 @@ package com.logscale.agent.engine;
 import com.amazonaws.auth.*;
 import com.amazonaws.services.kinesis.AmazonKinesisClient;
 import com.amazonaws.services.kinesis.model.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.logscale.agent.event.Event;
 import com.logscale.logger.Logger;
 import org.apache.commons.codec.Charsets;
-import org.bouncycastle.util.encoders.Base64;
 
-import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 public class KinesisEventBus extends EventBus {
@@ -20,15 +16,11 @@ public class KinesisEventBus extends EventBus {
 
     private static final int KINESIS_RESULTS_LIMIT = 100;
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-
     private final AWSCredentials creds;
 
     private final AmazonKinesisClient client;
 
     private final String streamName;
-
-    private AtomicReference<Engine> engineRef = new AtomicReference<>();
 
     public KinesisEventBus(String accessKey, String secretKey, String streamName) {
         creds = new BasicAWSCredentials(accessKey, secretKey);
@@ -38,29 +30,26 @@ public class KinesisEventBus extends EventBus {
 
     @Override
     public void start(Engine engine) {
-        super.start(engine);
+        log.info("starting kinesis event bus from stream: %s", streamName);
         client.describeStream(streamName).getStreamDescription().getShards().forEach(shard -> {
             String shardIterator = client.getShardIterator(streamName, shard.getShardId(), "LATEST").getShardIterator();
             engine.threadFactory.newThread(new ShardPoller(shard, shardIterator)).start();
         });
-        engineRef.set(engine);
+        super.start(engine);
     }
 
     @Override
     public void stop() {
-        engineRef.set(null);
         super.stop();
     }
 
     @Override
     public void push(Event event) {
-        ByteBuffer data = ByteBuffer.wrap(event.toString().getBytes());
+        super.push(event);
+        log.debug("sending event to kinesis stream %s: %s", streamName, event.id);
+        ByteBuffer data = ByteBuffer.wrap(event.id.getBytes(Charsets.UTF_8));
         String partitionKey = event.id;
         client.putRecord(streamName, data, partitionKey);
-    }
-
-    private boolean isStopped() {
-        return engineRef.get() == null;
     }
 
     private final class ShardPoller implements Runnable {
@@ -84,7 +73,7 @@ public class KinesisEventBus extends EventBus {
 
         private String processShard(final String shardIterator) {
             GetRecordsResult result = result(shardIterator);
-            events(result).forEach(KinesisEventBus.this::handleEvent);
+            eventIds(result).forEach(KinesisEventBus.this::handleEventId);
             return result.getNextShardIterator();
         }
 
@@ -96,35 +85,17 @@ public class KinesisEventBus extends EventBus {
             return client.getRecords(req);
         }
 
-        private Stream<Event> events(GetRecordsResult result) {
+        private Stream<String> eventIds(GetRecordsResult result) {
             List<Record> records = result.getRecords();
             if (records.isEmpty()) {
                 return Stream.empty();
             }
             log.debug("got %s records", records.size());
             return records.stream().map(record -> {
-                log.trace("getting event for result: %s", result);
-                byte[] bytes = record.getData().array();
-                Event event;
-                try {
-                    event = objectMapper.readValue(bytes, Event.class);
-                } catch (IOException e) {
-                    UncheckedIOException resultError = resultError(e, record);
-                    log.error("bad record", resultError);
-                    throw resultError;
-                }
-                return event;
+                String eventId = new String(record.getData().array(), Charsets.UTF_8);
+                log.debug("got event id: %s", eventId);
+                return eventId;
             });
-        }
-
-        private UncheckedIOException resultError(IOException ioe, Record record) {
-            return new UncheckedIOException("trouble reading event from record: " +
-                    "stream = " + streamName +
-                    ", shard = " + shard.getShardId() +
-                    ", partition = " + record.getPartitionKey() +
-                    ", sequence = " + record.getSequenceNumber() + ": " +
-                    new String(Base64.encode(record.getData().array()), Charsets.UTF_8),
-                ioe);
         }
     }
 }
