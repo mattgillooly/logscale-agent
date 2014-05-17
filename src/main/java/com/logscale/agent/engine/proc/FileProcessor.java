@@ -1,5 +1,6 @@
-package com.logscale.agent.engine;
+package com.logscale.agent.engine.proc;
 
+import com.logscale.agent.engine.Engine;
 import com.logscale.agent.event.*;
 import com.logscale.agent.util.PushStream;
 import com.logscale.logger.Logger;
@@ -30,7 +31,7 @@ public class FileProcessor implements SourceProcessor {
     public Stream<Event> events() {
         TailStream tailStream = new TailStream();
         ExecutorService executorService = Executors.newSingleThreadExecutor(engine.threadFactory);
-        executorService.submit(() -> new Tailer(new File(path), tailStream, 500, false, false, 4096).run());
+        executorService.submit(() -> new Tailer(new File(path), tailStream, 500, true, false, 4096).run());
         EventSource eventSource = new EventSource(String.format("tail[%s]", path), tailStream);
         return new EventBuffer(eventSource) {
             @Override
@@ -38,16 +39,11 @@ public class FileProcessor implements SourceProcessor {
                 super.close();
                 executorService.shutdownNow();
                 tailStream.close();
-                try {
-                    executorService.awaitTermination(10, TimeUnit.SECONDS);
-                } catch (InterruptedException e) {
-                    log.warn("interrupted waiting for tailer thread to end", e);
-                }
             }
         };
     }
 
-    private final class TailStream extends PushStream<String> implements Stream<String>, TailerListener {
+    private final class TailStream extends PushStream<String> implements TailerListener {
         private final AtomicReference<Tailer> tailerRef = new AtomicReference<>();
 
         public TailStream() {

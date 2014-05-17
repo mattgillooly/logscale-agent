@@ -24,7 +24,7 @@ public class WebsocketClientHandler extends SimpleChannelInboundHandler<TextWebS
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        super.channelActive(ctx);    //To change body of overridden methods use File | Settings | File Templates.
+        super.channelActive(ctx);
     }
 
     @Override
@@ -51,6 +51,7 @@ public class WebsocketClientHandler extends SimpleChannelInboundHandler<TextWebS
                 break;
             case configureAgent:
                 log.info("configuring agent");
+
                 session.agent.executor.submit(new Engine(session, m.get("agent")));
                 break;
             case uiSubscribe:

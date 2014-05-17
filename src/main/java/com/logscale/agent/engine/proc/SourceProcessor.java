@@ -1,4 +1,4 @@
-package com.logscale.agent.engine;
+package com.logscale.agent.engine.proc;
 
 import com.logscale.agent.event.Event;
 

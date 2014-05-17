@@ -1,12 +1,11 @@
 package com.logscale.agent.engine;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.logscale.agent.engine.proc.*;
 import com.logscale.agent.event.Event;
 import com.logscale.agent.ws.WebsocketClientSession;
-import com.logscale.agent.ws.msg.EventMessage;
 import com.logscale.logger.Logger;
 
-import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -25,7 +24,7 @@ public class Engine implements Runnable {
 
     final ThreadGroup threadGroup = new ThreadGroup("engine");
     final AtomicInteger threadNumber = new AtomicInteger();
-    final ThreadFactory threadFactory = r -> new Thread(threadGroup, r, threadGroup.getName() + "-" + threadNumber.incrementAndGet());
+    public final ThreadFactory threadFactory = r -> new Thread(threadGroup, r, threadGroup.getName() + "-" + threadNumber.incrementAndGet());
 
     public Engine(WebsocketClientSession session, JsonNode config) {
         log.info("constructing engine from config: %s", config);

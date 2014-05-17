@@ -1,5 +1,6 @@
-package com.logscale.agent.engine;
+package com.logscale.agent.engine.proc;
 
+import com.logscale.agent.engine.Engine;
 import com.logscale.agent.event.Event;
 import com.logscale.logger.Logger;
 

@@ -1,5 +1,7 @@
 package com.logscale.agent.engine;
 
+import com.logscale.agent.engine.proc.*;
+import com.logscale.agent.engine.proc.IndexProcessor;
 import com.logscale.agent.event.Event;
 import com.logscale.logger.Logger;
 import org.junit.*;
