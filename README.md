@@ -45,7 +45,7 @@ To generate a valid config file, issue:
     echo
 
 The rest of the configuration is delivered by [the API]
-(https://github.com/logscale/api#agent-configuration).
+(https://github.com/logscale/logscale-api#configureagent).
 
 When not using the "Add Agent" wizard in the UI, you can generate the JSON for
 seeding the agent config node by pasting the public key from the above command
